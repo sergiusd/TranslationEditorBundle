@@ -89,7 +89,7 @@ class ImportCommand extends Base
         switch($type) {
             case 'yml':
                 $yaml = new Parser();
-                $value = $yaml->parse(file_get_contents($filename));
+                $value = $this->getSingleLevelArray($yaml->parse(file_get_contents($filename)));
 
                 $data = $this->getContainer()->get('server_grove_translation_editor.storage_manager')->getCollection()->findOne(array('filename'=>$filename));
                 if (!$data) {
@@ -113,6 +113,21 @@ class ImportCommand extends Base
                 $this->output->writeln("  Skipping, not implemented");
                 break;
         }
+    }
+
+    protected function getSingleLevelArray($values, $complexKey = '', $ret = array())
+    {
+        foreach($values as $key=>$value)
+	{
+            $valueKey = $complexKey.($complexKey?'.':'').$key;
+            if (is_array($value)) {
+                $ret = $this->getSingleLevelArray($value, $valueKey, $ret);
+            }
+            else {
+                $ret[$valueKey] = $value;
+            }
+        }
+        return $ret;
     }
 
     protected function setIndexes()
