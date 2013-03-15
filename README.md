@@ -76,6 +76,33 @@ Add the routing configuration to app/config/routing_dev.yml
 		resource: "@ServerGroveTranslationEditorBundle/Resources/config/routing.yml"
 		prefix:   /
 
+Add the routing configuration to app/config/security.yml
+
+    security:
+        encoders:
+            Symfony\Component\Security\Core\User\User: plaintext
+
+        providers:
+            in_memory:
+                memory:
+                    users:
+                        # user can edit all locales
+                        - {name: 'translator-all', password: ******, roles: 'ROLE_TRANSLATOR'}
+                        # user can edit one locale
+                        - {name: 'translator-en', password: ******, roles: 'ROLE_TRANSLATOR'}
+                        - {name: 'translator-ua', password: ******, roles: 'ROLE_TRANSLATOR'}
+                        ...
+
+        firewalls:
+            translations:
+                pattern: ^/translations
+                anonymous: ~
+                http_basic:
+                    realm: "Secured Translation Area"
+
+        access_control:
+            - { path: ^/translations, roles: ROLE_TRANSLATOR }
+
 ## Usage:
 
 1. Import translation files into mongodb

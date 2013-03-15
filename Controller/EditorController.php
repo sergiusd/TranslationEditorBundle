@@ -3,16 +3,43 @@
 namespace ServerGrove\Bundle\TranslationEditorBundle\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class EditorController extends Controller
 {
+    private function getAllowLocale()
+    {
+        $user = $this->get('security.context')->getToken()->getUser();
+        if (is_object($user) && preg_match('/^translator-(.+)$/', $user->getUsername(), $m)) {
+            return $m[1];
+        }
+        else {
+            throw new AccessDeniedHttpException();
+        }
+    }
+
+    private function isCanEditAll()
+    {
+        return $this->getAllowLocale() == 'all';
+    }
+
+    private function isCanEdit($locale)
+    {
+        $allowLocale = $this->getAllowLocale();
+        return $this->isCanEditAll() || ($allowLocale && $allowLocale == $locale);
+    }
+
     public function getCollection()
     {
         return $this->container->get('server_grove_translation_editor.storage_manager')->getCollection();
     }
 
-    public function listAction()
+    public function listAction($to)
     {
+        if (!$this->isCanEdit($to)) {
+            return $this->redirect($this->generateUrl('sg_localeditor_list', array('to' => $this->getAllowLocale())));
+        }
+
         $data = $this->getCollection()->find();
 
         $data->sort(array('locale' => 1));
@@ -23,6 +50,9 @@ class EditorController extends Controller
         $missing = array();
 
         foreach ($data as $d) {
+            if ($to && !in_array($d['locale'], array($to, $default))) {
+                continue;
+            }
             if (!isset($locales[$d['locale']])) {
                 $locales[$d['locale']] = array(
                     'entries' => array(),
@@ -37,10 +67,12 @@ class EditorController extends Controller
 
         $keys = array_keys($locales);
 
+        $localesSorted = array($default => $locales[$default]);
         foreach ($keys as $locale) {
             if ($locale != $default) {
+                $localesSorted[$locale] = $locales[$locale];
                 foreach ($locales[$default]['entries'] as $key => $val) {
-                    if (!isset($locales[$locale]['entries'][$key]) || $locales[$locale]['entries'][$key] == $key) {
+                    if (!isset($locales[$locale]['entries'][$key])) {// || $locales[$locale]['entries'][$key] == $key) {
                         $missing[$key] = 1;
                     }
                 }
@@ -48,15 +80,20 @@ class EditorController extends Controller
         }
 
         return $this->render('ServerGroveTranslationEditorBundle:Editor:list.html.twig', array(
-                'locales' => $locales,
+                'locales' => $localesSorted,
                 'default' => $default,
                 'missing' => $missing,
+                'canEditAll' => $this->isCanEditAll()
             )
         );
     }
 
     public function removeAction()
     {
+        if (!$this->isCanEditAll()) {
+            throw new AccessDeniedHttpException();
+        }
+
         $request = $this->getRequest();
 
         if ($request->isXmlHttpRequest()) {
@@ -80,6 +117,10 @@ class EditorController extends Controller
 
     public function addAction()
     {
+        if (!$this->isCanEditAll()) {
+            throw new AccessDeniedHttpException();
+        }
+
         $request = $this->getRequest();
 
         $locales = $request->request->get('locale');
@@ -128,6 +169,11 @@ class EditorController extends Controller
             $locale = $request->request->get('locale');
             $key = $request->request->get('key');
             $val = $request->request->get('val');
+
+            if (!$this->isCanEdit($locale)) {
+                throw new AccessDeniedHttpException();
+            }
+
 
             $values = $this->getCollection()->find(array('locale' => $locale));
             $values = iterator_to_array($values);

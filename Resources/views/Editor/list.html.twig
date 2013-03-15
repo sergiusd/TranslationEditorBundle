@@ -153,7 +153,9 @@
 <table class="zebra-striped">
     <thead>
     <tr>
-        <th></th>
+        {% if canEditAll %}
+            <th></th>
+        {% endif %}
         <th>Key</th>
         {% for locale,v in locales %}
         <th>{{locale}}
@@ -165,15 +167,17 @@
     <tbody>
     {% for key, val in locales[default].entries %}
     <tr id="entry-{{loop.index}}" {{missing[key] is defined ? 'class="missing"' : 'class="ok"'}}>
-        <td>
-            <input id="remove-{{loop.index}}" class=" btn danger mysmall" type="button" value="Remove" onclick="confirm('Are you sure?') && removeEntry('{{loop.index}}', '{{key}}')">
-        </td>
+        {% if canEditAll %}
+            <td>
+                <input id="remove-{{loop.index}}" class=" btn danger mysmall" type="button" value="Remove" onclick="confirm('Are you sure?') && removeEntry('{{loop.index}}', '{{key}}')">
+            </td>
+        {% endif %}
         <td>{{key}}</td>
         {% for locale,v in locales %}
         <td>
             <div id="current-{{loop.parent.loop.index}}-{{locale}}">
                 {% set exists = key in v.entries|keys %}
-                <div id="current-{{loop.parent.loop.index}}-{{locale}}-content" onclick="showEditor('{{loop.parent.loop.index}}-{{locale}}')">{% if exists %}{{v.entries[key]}}{%endif%}</div>
+                <div id="current-{{loop.parent.loop.index}}-{{locale}}-content"{% if locale != default or canEditAll %} onclick="showEditor('{{loop.parent.loop.index}}-{{locale}}')"{% endif %}>{% if exists %}{{v.entries[key]}}{%endif%}</div>
                 {% if locale != default and exists and v.entries[key] == locales[default].entries[key] %}
                     <span class="label warning">Duplicate</span>
                 {% endif %}
