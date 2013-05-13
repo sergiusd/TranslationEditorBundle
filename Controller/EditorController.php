@@ -48,6 +48,8 @@ class EditorController extends Controller
 
         $default = $this->container->getParameter('locale', 'en');
         $missing = array();
+		$duplicate = array();
+		$groupped = array();
 
         foreach ($data as $d) {
             if ($to && !in_array($d['locale'], array($to, $default))) {
@@ -65,24 +67,35 @@ class EditorController extends Controller
             }
         }
 
-        $keys = array_keys($locales);
+        $localesList = array($default);
+		foreach(array_keys($locales) as $l) {
+			if ($l != $default) {
+				$localesList[] = $l;
+			}
+		}
 
-        $localesSorted = array($default => $locales[$default]);
-        foreach ($keys as $locale) {
-            if ($locale != $default) {
-                $localesSorted[$locale] = $locales[$locale];
-                foreach ($locales[$default]['entries'] as $key => $val) {
-                    if (!isset($locales[$locale]['entries'][$key])) {// || $locales[$locale]['entries'][$key] == $key) {
-                        $missing[$key] = 1;
-                    }
-                }
-            }
-        }
+        $localesSorted = array();
+		foreach ($locales[$default]['entries'] as $key => $val) {
+			$keySplit = explode('.', rtrim($key, '.'), 2);
+			$group = count($keySplit) > 1 ? $keySplit[0] : '';
+			foreach ($localesList as $locale) {
+				$localesSorted[$group][$key][$locale] = $locales[$locale]['entries'][$key];
+				if (empty($locales[$locale]['entries'][$key])) {
+					$missing[$key] = 1;
+				}
+				if ($locale != $default && $locales[$locale]['entries'][$key] == $locales[$default]['entries'][$key]) {
+					$duplicate[$key] = 1;
+				}
+			}
+		}
 
         return $this->render('ServerGroveTranslationEditorBundle:Editor:list.html.twig', array(
                 'locales' => $localesSorted,
                 'default' => $default,
                 'missing' => $missing,
+				'duplicate' => $duplicate,
+				'localesList' => $localesList,
+				'keysCount' => count($locales[$locale]['entries']),
                 'canEditAll' => $this->isCanEditAll()
             )
         );

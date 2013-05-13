@@ -46,7 +46,7 @@
         <div class="well">
           <h5>Available Locales</h5>
           <ul>
-              {% for locale, v in locales %}
+              {% for locale in localesList %}
               <li>{{locale}} {% if locale == default %}<span class="label">Default</span>{%endif%}</li>
               {%endfor%}
           </ul>

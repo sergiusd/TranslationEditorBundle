@@ -5,13 +5,20 @@
 
     function showAll()
     {
-        $('.zebra-striped tbody tr.ok').show();
+		$('.zebra-striped tbody tr').show();
     }
 
     function showMissing()
     {
-        $('.zebra-striped tbody tr.ok').hide();
+		$('.zebra-striped tbody tr').hide();
+        $('.zebra-striped tbody tr.head, .zebra-striped tbody tr.missing').show();
     }
+
+	function showDuplicate()
+	{
+		$('.zebra-striped tbody tr').hide();
+		$('.zebra-striped tbody tr.head, .zebra-striped tbody tr.duplicate').show();
+	}
 
     function showEditor(id)
     {
@@ -127,8 +134,15 @@
 </style>
 <h5>Stats</h5>
 <ul>
-    <li><a href="#" onclick="showAll()">Entries: {{locales[default].entries|length}}</a></li>
+    <li><a href="#" onclick="showAll()">Entries: {{keysCount}}</a></li>
+    <li><a href="#" onclick="showDuplicate()">Duplicate translations: {{duplicate|length}}</a></li>
     <li><a href="#" onclick="showMissing()">Missing translations: {{missing|length}}</a></li>
+</ul>
+<h5>Groups</h5>
+<ul>
+	{% for groupName, skip in locales %}
+		<li><a href="#group-{{ groupName }}">{{ groupName|default('Without group') }}</a></li>
+	{% endfor %}
 </ul>
 {% endblock %}
 
@@ -157,7 +171,7 @@
             <th></th>
         {% endif %}
         <th>Key</th>
-        {% for locale,v in locales %}
+        {% for locale in localesList %}
         <th>{{locale}}
             {% if locale == default %}<span class="label">Default</span>{%endif%}
         </th>
@@ -165,41 +179,44 @@
     </tr>
     </thead>
     <tbody>
-    {% for key, val in locales[default].entries %}
-    <tr id="entry-{{loop.index}}" {{missing[key] is defined ? 'class="missing"' : 'class="ok"'}}>
-        {% if canEditAll %}
-            <td>
-                <input id="remove-{{loop.index}}" class=" btn danger mysmall" type="button" value="Remove" onclick="confirm('Are you sure?') && removeEntry('{{loop.index}}', '{{key}}')">
-            </td>
-        {% endif %}
-        <td>{{key}}</td>
-        {% for locale,v in locales %}
-        <td>
-            <div id="current-{{loop.parent.loop.index}}-{{locale}}">
-                {% set exists = key in v.entries|keys %}
-                <div id="current-{{loop.parent.loop.index}}-{{locale}}-content"{% if locale != default or canEditAll %} onclick="showEditor('{{loop.parent.loop.index}}-{{locale}}')"{% endif %}>{% if exists %}{{v.entries[key]}}{%endif%}</div>
-                {% if locale != default and exists and v.entries[key] == locales[default].entries[key] %}
-                    <span class="label warning">Duplicate</span>
-                {% endif %}
-                {% if not exists or v.entries[key]|length == 0 %}
-                    <span class="label important" onclick="showEditor('{{loop.parent.loop.index}}-{{locale}}')">Missing</span>
-                {% endif %}
-            </div>
-            <div id="editor-{{loop.parent.loop.index}}-{{locale}}" class="editor">
-                <textarea>{% if exists %}{{v.entries[key]}}{%endif%}</textarea><br/>
-                <input id="save-{{loop.parent.loop.index}}-{{locale}}"class="btn mysmall success" type="button" value="Save" onclick="saveChange('{{loop.parent.loop.index}}-{{locale}}', '{{key|e('js')}}', '{{locale}}')">
-                <input class="btn mysmall" type="button" value="Cancel" onclick="hideEditor('{{loop.parent.loop.index}}-{{locale}}')">
-            </div>
-        </td>
-        {% endfor %}
-    </tr>
-    {% endfor %}
+	{% for groupName, groupList in locales %}
+		<tr class="head"><th colspan="{{ localesList|length + ( canEditAll ? 2 : 1 ) }}"><a name="group-{{ groupName }}"></a><h2>{{ groupName|default('Without group') }}</h2></th></tr>
+		{% for key, vals in groupList %}
+			<tr id="entry-{{loop.index}}" class="{{ missing[key] is defined ? "missing" : ( duplicate[key] is defined ? "duplicate" : "ok" ) }}">
+				{% if canEditAll %}
+					<td>
+						<input id="remove-{{loop.index}}" class=" btn danger mysmall" type="button" value="Remove" onclick="confirm('Are you sure?') && removeEntry('{{loop.index}}', '{{key}}')">
+					</td>
+				{% endif %}
+				<td>{{key}}</td>
+				{% for locale, val in vals %}
+					<td>
+						<div id="current-{{loop.parent.loop.index}}-{{locale}}">
+							{% set exists = true %}{#key in v.entries|keys %#}
+							<div id="current-{{loop.parent.loop.index}}-{{locale}}-content"{% if locale != default or canEditAll %} onclick="showEditor('{{loop.parent.loop.index}}-{{locale}}')"{% endif %}>{% if exists %}{{val}}{%endif%}</div>
+							{% if locale != default and exists and val == locales[groupName][key][default] %}
+								<span class="label warning">Duplicate</span>
+							{% endif %}
+							{% if not exists or val|length == 0 %}
+								<span class="label important" onclick="showEditor('{{loop.parent.loop.index}}-{{locale}}')">Missing</span>
+							{% endif %}
+						</div>
+						<div id="editor-{{loop.parent.loop.index}}-{{locale}}" class="editor">
+							<textarea>{% if exists %}{{val}}{%endif%}</textarea><br/>
+							<input id="save-{{loop.parent.loop.index}}-{{locale}}"class="btn mysmall success" type="button" value="Save" onclick="saveChange('{{loop.parent.loop.index}}-{{locale}}', '{{key|e('js')}}', '{{locale}}')">
+							<input class="btn mysmall" type="button" value="Cancel" onclick="hideEditor('{{loop.parent.loop.index}}-{{locale}}')">
+						</div>
+					</td>
+				{% endfor %}
+			</tr>
+		{% endfor %}
+	{% endfor %}
     </tbody>
 </table>
 <!-- Example row of columns -->
 
 <footer>
-  <p>&copy; ServerGrove 2012</p>
+  <p>&copy; ServerGrove & SergiusD 2012</p>
 </footer>
 </div>
 
