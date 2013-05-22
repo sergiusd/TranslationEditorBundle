@@ -155,7 +155,7 @@
     <input type="hidden" id="check-only" name="check-only" value="0" />
     <label>Key:</label> <input type="text" id="key" name="key" style="width: 700px"
                                onchange="submitAjaxForm($('#newtranslation'), true)"/> </br>
-    {% for locale, v in locales %}
+    {% for locale in localesList %}
     <label>{{locale}}:</label> <textarea name="locale[{{locale}}]" style="width: 700px; height: 100px"></textarea> </br>
     {% endfor %}
     <label></label><input type="submit" value="Save" class="btn primary">
@@ -182,29 +182,30 @@
 	{% for groupName, groupList in locales %}
 		<tr class="head"><th colspan="{{ localesList|length + ( canEditAll ? 2 : 1 ) }}"><a name="group-{{ groupName }}"></a><h2>{{ groupName|default('Without group') }}</h2></th></tr>
 		{% for key, vals in groupList %}
-			<tr id="entry-{{loop.index}}" class="{{ missing[key] is defined ? "missing" : ( duplicate[key] is defined ? "duplicate" : "ok" ) }}">
+			{% set trKey = groupName ~ '-' ~ loop.index %}
+			<tr id="entry-{{trKey}}" class="{{ missing[key] is defined ? "missing" : ( duplicate[key] is defined ? "duplicate" : "ok" ) }}">
 				{% if canEditAll %}
 					<td>
-						<input id="remove-{{loop.index}}" class=" btn danger mysmall" type="button" value="Remove" onclick="confirm('Are you sure?') && removeEntry('{{loop.index}}', '{{key}}')">
+						<input id="remove-{{trKey}}" class=" btn danger mysmall" type="button" value="Remove" onclick="confirm('Are you sure?') && removeEntry('{{trKey}}', '{{key}}')">
 					</td>
 				{% endif %}
 				<td>{{key}}</td>
 				{% for locale, val in vals %}
 					<td>
-						<div id="current-{{loop.parent.loop.index}}-{{locale}}">
+						<div id="current-{{trKey}}-{{locale}}">
 							{% set exists = true %}{#key in v.entries|keys %#}
-							<div id="current-{{loop.parent.loop.index}}-{{locale}}-content"{% if locale != default or canEditAll %} onclick="showEditor('{{loop.parent.loop.index}}-{{locale}}')"{% endif %}>{% if exists %}{{val}}{%endif%}</div>
+							<div id="current-{{trKey}}-{{locale}}-content"{% if locale != default or canEditAll %} onclick="showEditor('{{trKey}}-{{locale}}')"{% endif %}>{% if exists %}{{val}}{%endif%}</div>
 							{% if locale != default and exists and val == locales[groupName][key][default] %}
 								<span class="label warning">Duplicate</span>
 							{% endif %}
 							{% if not exists or val|length == 0 %}
-								<span class="label important" onclick="showEditor('{{loop.parent.loop.index}}-{{locale}}')">Missing</span>
+								<span class="label important" onclick="showEditor('{{trKey}}-{{locale}}')">Missing</span>
 							{% endif %}
 						</div>
-						<div id="editor-{{loop.parent.loop.index}}-{{locale}}" class="editor">
+						<div id="editor-{{trKey}}-{{locale}}" class="editor">
 							<textarea>{% if exists %}{{val}}{%endif%}</textarea><br/>
-							<input id="save-{{loop.parent.loop.index}}-{{locale}}"class="btn mysmall success" type="button" value="Save" onclick="saveChange('{{loop.parent.loop.index}}-{{locale}}', '{{key|e('js')}}', '{{locale}}')">
-							<input class="btn mysmall" type="button" value="Cancel" onclick="hideEditor('{{loop.parent.loop.index}}-{{locale}}')">
+							<input id="save-{{trKey}}-{{locale}}"class="btn mysmall success" type="button" value="Save" onclick="saveChange('{{trKey}}-{{locale}}', '{{key|e('js')}}', '{{locale}}')">
+							<input class="btn mysmall" type="button" value="Cancel" onclick="hideEditor('{{trKey}}-{{locale}}')">
 						</div>
 					</td>
 				{% endfor %}
