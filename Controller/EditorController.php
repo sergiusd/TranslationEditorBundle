@@ -79,11 +79,11 @@ class EditorController extends Controller
 			$keySplit = explode('.', rtrim($key, '.'), 2);
 			$group = count($keySplit) > 1 ? $keySplit[0] : '';
 			foreach ($localesList as $locale) {
-				$localesSorted[$group][$key][$locale] = $locales[$locale]['entries'][$key];
+				$localesSorted[$group][$key][$locale] = isset($locales[$locale]['entries'][$key]) ? $locales[$locale]['entries'][$key] : '';
 				if (empty($locales[$locale]['entries'][$key])) {
 					$missing[$key] = 1;
 				}
-				if ($locale != $default && $locales[$locale]['entries'][$key] == $locales[$default]['entries'][$key]) {
+				if ($locale != $default && isset($locales[$locale]['entries'][$key]) && $locales[$locale]['entries'][$key] == $locales[$default]['entries'][$key]) {
 					$duplicate[$key] = 1;
 				}
 			}
