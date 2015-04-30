@@ -95,7 +95,7 @@ class EditorController extends Controller
                 'missing' => $missing,
 				'duplicate' => $duplicate,
 				'localesList' => $localesList,
-				'keysCount' => count($locales[$locale]['entries']),
+				'keysCount' => count($locales[$default]['entries']),
                 'canEditAll' => $this->isCanEditAll()
             )
         );
