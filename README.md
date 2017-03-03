@@ -132,7 +132,7 @@ Add the routing configuration to app/config/security.yml
 
 **Pull requests are welcome! We open sourced this bundle hoping people find it useful. Please contribute back any enhancements.**
 
-**Notice:** This bundle has been developed with very short time availability so it does not contain tests, comments, etc, so don't look at it to see how things are done. Instead of complaining of the ugly code, please contribute pull requests with enhancements :)
+**Notice:** This bundle has been developed with very short time availability so it does not contain tests, comments, etc, so don't look at it to see how things are done. Instead of complaining of the ugly code, please contribute pull requests with enhancements :))
 
 ## More information:
 
